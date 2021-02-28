@@ -18,11 +18,13 @@ package com.example.androiddevchallenge
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigate
+import androidx.navigation.compose.rememberNavController
+import com.example.androiddevchallenge.data.PuppyDataProvider
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
 class MainActivity : AppCompatActivity() {
@@ -30,17 +32,27 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyTheme {
-                MyApp()
+                val navController = rememberNavController()
+                NavHost(navController, startDestination = "home") {
+                    composable("home") {
+                        PuppiesListScreen(
+                            puppies = PuppyDataProvider.puppies,
+                            navigateToPuppyDetails = { puppy ->
+                                navController.navigate("puppy/${puppy.id}")
+                            }
+                        )
+                    }
+                    composable("puppy/{id}") { backStackEntry ->
+                        val puppyName = backStackEntry.arguments?.getString("id")
+                        val puppy = PuppyDataProvider.puppies.find { it.id == puppyName }!!
+                        PuppyDetailsScreen(
+                            puppy = puppy,
+                            navigateBack = { navController.popBackStack() }
+                        )
+                    }
+                }
             }
         }
-    }
-}
-
-// Start building your app here!
-@Composable
-fun MyApp() {
-    Surface(color = MaterialTheme.colors.background) {
-        Text(text = "Ready... Set... GO!")
     }
 }
 
@@ -48,7 +60,7 @@ fun MyApp() {
 @Composable
 fun LightPreview() {
     MyTheme {
-        MyApp()
+        PuppiesListScreen(puppies = PuppyDataProvider.puppies, navigateToPuppyDetails = {})
     }
 }
 
@@ -56,6 +68,6 @@ fun LightPreview() {
 @Composable
 fun DarkPreview() {
     MyTheme(darkTheme = true) {
-        MyApp()
+        PuppiesListScreen(puppies = PuppyDataProvider.puppies, navigateToPuppyDetails = {})
     }
 }
